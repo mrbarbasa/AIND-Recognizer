@@ -156,11 +156,14 @@ class SelectorCV(ModelSelector):
         # If the word sequence length is less than 2, KFold doesn't make sense
         if len(self.sequences) < 2:
             for num_states in range(self.min_n_components, self.max_n_components + 1):
-                model = self.base_model(num_states)
-                logL = model.score(self.X, self.lengths)
-                if logL > max_score:
-                    max_score = logL
-                    best_model = model
+                try:
+                    model = self.base_model(num_states)
+                    logL = model.score(self.X, self.lengths)
+                    if logL > max_score:
+                        max_score = logL
+                        best_model = model
+                except Exception:
+                    return best_model
             return best_model
 
         # Word sequence length could be 2 or greater
