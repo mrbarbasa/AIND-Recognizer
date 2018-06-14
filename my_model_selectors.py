@@ -148,5 +148,51 @@ class SelectorCV(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        DEFAULT_SPLITS = 3
+        max_score = float('-inf')
+        best_num_components = 0
+        best_model = None
+
+        # If the word sequence length is less than 2, KFold doesn't make sense
+        if len(self.sequences) < 2:
+            for num_states in range(self.min_n_components, self.max_n_components + 1):
+                model = self.base_model(num_states)
+                logL = model.score(self.X, self.lengths)
+                if logL > max_score:
+                    max_score = logL
+                    best_model = model
+            return best_model
+
+        # Word sequence length could be 2 or greater
+        for num_states in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                model = None
+                sum_all_folds_logL = 0.0
+                k_splits = min(DEFAULT_SPLITS, len(self.sequences))
+                kfold = KFold(n_splits=k_splits)
+
+                # Indexes of the folds, such as [2 3 4 5]
+                for train_indexes, test_indexes in kfold.split(self.sequences):
+                    # Fit the model on the training data
+                    X_train, train_lengths = combine_sequences(train_indexes, self.sequences)
+                    model = GaussianHMM(n_components=num_states,
+                                        covariance_type='diag',
+                                        n_iter=1000,
+                                        random_state=self.random_state,
+                                        verbose=False
+                                        ).fit(X_train, train_lengths)
+                    # Score the model on the test data
+                    X_test, test_lengths = combine_sequences(test_indexes, self.sequences)
+                    sum_all_folds_logL += model.score(X_test, test_lengths)
+
+                # Current CV score is the average of log likelihoods across all folds
+                cv_score = sum_all_folds_logL / k_splits
+                if cv_score > max_score:
+                    max_score = cv_score
+                    best_num_components = num_states
+
+            except Exception:
+                return self.base_model(best_num_components)
+
+        # Return a model fitted over all the data with the best number of hidden states
+        return self.base_model(best_num_components)
