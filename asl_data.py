@@ -148,7 +148,7 @@ class WordsData(object):
     def get_word_Xlengths(self, word:str):
         """ getter for single word (X, lengths) tuple for use with hmmlearn library
 
-        :param word:
+        :param word: str
         :return: (list, list)
             (X, lengths) tuple, where X is a numpy array of feature lists and lengths is
             a list of lengths of sequences within X
@@ -248,7 +248,7 @@ class SinglesData(object):
     def get_item_sequences(self, item:int):
         """ getter for single item series of sequences of feature lists for each frame
 
-        :param word: str
+        :param item: int
         :return: list
             lists of feature list sequence lists for given word
                 [[[87, 225], [87, 225], ...]]]
@@ -258,7 +258,7 @@ class SinglesData(object):
     def get_item_Xlengths(self, item:int):
         """ getter for single item (X, lengths) tuple for use with hmmlearn library
 
-        :param word:
+        :param item: int
         :return: (list, list)
             (X, lengths) tuple, where X is a numpy array of feature lists and lengths is
             a list of lengths of sequences within X; lengths should always contain one item
